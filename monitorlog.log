@@ -1,0 +1,47 @@
+Monitoring IPv4/TCP on ens33 for OpenFlow port 6653 (threshold 100, window 5.0s, refresh 1.0s).
+PacketIn counts (rolling window 5.0s)
+  waiting for PacketIn traffic
+PacketIn counts (rolling window 5.0s)
+  waiting for PacketIn traffic
+PacketIn counts (rolling window 5.0s)
+  waiting for PacketIn traffic
+PacketIn counts (rolling window 5.0s)
+  waiting for PacketIn traffic
+PacketIn counts (rolling window 5.0s)
+  waiting for PacketIn traffic
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=1 recent=1
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=4 recent=4
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=2 recent=2
+  10.224.76.126:35740 -> 10.224.78.132:6653 total=2 recent=2
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=1 recent=1
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=4 recent=4
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=2 recent=2
+  10.224.76.126:35740 -> 10.224.78.132:6653 total=2 recent=2
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=1 recent=1
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=4 recent=4
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=2 recent=2
+  10.224.76.126:35740 -> 10.224.78.132:6653 total=3 recent=3
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=13 recent=12
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=17 recent=13
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=16 recent=14
+  10.224.76.126:35740 -> 10.224.78.132:6653 total=16 recent=14
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=13 recent=12
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=17 recent=13
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=16 recent=14
+  10.224.76.126:35740 -> 10.224.78.132:6653 total=16 recent=14
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=14 recent=13
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=19 recent=15
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=18 recent=16
+  10.224.76.126:35740 -> 10.224.78.132:6653 total=17 recent=15
+PacketIn counts (rolling window 5.0s)
+  10.224.76.126:35734 -> 10.224.78.132:6653 total=18 recent=5
+  10.224.76.126:35736 -> 10.224.78.132:6653 total=23 recent=6
+  10.224.76.126:35738 -> 10.224.78.132:6653 total=23 recent=7
+
+Monitor stopped.
