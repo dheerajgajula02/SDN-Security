@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Static Routing · SDN Security{% endblock %}
+{% block content %}
+<section class="detail-page routing-page" aria-labelledby="page-title">
+  <a class="back-link" href="{{ url_for('home') }}">← Back to overview</a>
+  <div class="section-kicker">WORKSPACE 01 / FORWARDING</div>
+  <h1 id="page-title">Static Routing<span class="title-period">.</span></h1>
+  <p>Install explicit OpenFlow entries through Floodlight’s REST API. This lab topology has two hosts on each switch, with the switch-to-switch link on port 3.</p>
+
+  {% if error %}<div class="feedback feedback-error" role="alert">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="feedback feedback-success" role="status">{{ notice }}</div>{% endif %}
+
+  <div class="routing-layout">
+    <section class="detail-panel policy-panel" aria-labelledby="policy-title">
+      <span class="panel-step">LAB TOPOLOGY / ONE ACTION</span>
+      <h2 id="policy-title">Connect all four hosts</h2>
+      <p>Install ARP flood rules and destination-based IPv4 forwarding on s1 and s2. Each rule matches its ingress port; port 3 joins the switches.</p>
+      <div class="port-map" aria-label="Lab port map">
+        <div><strong>s1</strong><span>1 → 10.0.0.1</span><span>2 → 10.0.0.3</span><span>3 → s2</span></div>
+        <div><strong>s2</strong><span>1 → 10.0.0.2</span><span>2 → 10.0.0.4</span><span>3 → s1</span></div>
+      </div>
+      <form method="post" action="{{ url_for('routing_post') }}" class="policy-form">
+        <input type="hidden" name="operation" value="complete">
+        <label for="policy-priority">Flow priority</label>
+        <div class="inline-action">
+          <input id="policy-priority" name="policy_priority" type="number" min="1" max="65535" value="{{ values.get('policy_priority', '100') }}" required>
+          <button class="primary-button" type="submit" {% if not lab_ready %}disabled{% endif %}>Install full policy <span aria-hidden="true">↗</span></button>
+        </div>
+      </form>
+      <p class="panel-footnote">Creates 22 entries: six ARP flood rules and sixteen IPv4 paths. Repeating this action updates the same named entries.</p>
+    </section>
+
+    <section class="detail-panel single-panel" aria-labelledby="single-title">
+      <span class="panel-step">OPERATOR INPUT</span>
+      <h2 id="single-title">Add one static flow</h2>
+      <p>Set an exact match and forwarding action for a connected switch.</p>
+      <form method="post" action="{{ url_for('routing_post') }}" class="route-form">
+        <input type="hidden" name="operation" value="add">
+        <div class="field-grid">
+          <div class="form-field wide-field">
+            <label for="route-dpid">DPID</label>
+            <select id="route-dpid" name="dpid" required>
+              {% for switch_name, dpid in lab_switches.items()|sort %}
+              <option value="{{ dpid }}" {% if values.get('dpid', lab_switches['s1']) == dpid %}selected{% endif %} {% if dpid not in connected_dpids %}disabled{% endif %}>{{ switch_name }} · {{ dpid }}{% if dpid not in connected_dpids %} (disconnected){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="route-priority">Priority</label>
+            <input id="route-priority" name="priority" type="number" min="1" max="65535" value="{{ values.get('priority', '100') }}" required>
+          </div>
+          <div class="form-field">
+            <label for="route-in-port">In-Port</label>
+            <input id="route-in-port" name="in_port" type="number" min="1" max="65535" value="{{ values.get('in_port', '1') }}" required>
+          </div>
+          <div class="form-field">
+            <label for="route-eth-type">Ethernet type</label>
+            <select id="route-eth-type" name="eth_type" required>
+              <option value="0x0800" {% if values.get('eth_type', '0x0800') == '0x0800' %}selected{% endif %}>IPv4 · 0x0800</option>
+              <option value="0x0806" {% if values.get('eth_type') == '0x0806' %}selected{% endif %}>ARP · 0x0806</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="route-destination">Destination IP</label>
+            <input id="route-destination" name="destination_ip" type="text" inputmode="decimal" placeholder="10.0.0.2" value="{{ values.get('destination_ip', '10.0.0.2') }}">
+            <small>For ARP, leave blank to match any target.</small>
+          </div>
+          <div class="form-field">
+            <label for="route-action">Action</label>
+            <select id="route-action" name="action" required>
+              <option value="output" {% if values.get('action', 'output') == 'output' %}selected{% endif %}>Specific output port</option>
+              <option value="flood" {% if values.get('action') == 'flood' %}selected{% endif %}>Flood</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="route-output-port">Output port</label>
+            <input id="route-output-port" name="output_port" type="number" min="1" max="65535" value="{{ values.get('output_port', '2') }}">
+            <small>Used when Action is a specific port.</small>
+          </div>
+        </div>
+        <button class="secondary-button" type="submit" {% if not connected_dpids %}disabled{% endif %}>Add flow entry <span aria-hidden="true">↗</span></button>
+      </form>
+    </section>
+  </div>
+
+  <section class="entries-section" aria-labelledby="entries-title">
+    <div class="entries-heading">
+      <div><span class="section-kicker">CONTROLLER INVENTORY</span><h2 id="entries-title">Lab routing entries</h2></div>
+      <span class="entry-count">{{ entries|length }} visible</span>
+    </div>
+    {% if entries %}
+    <div class="table-scroll">
+      <table class="entries-table">
+        <thead><tr><th>Switch</th><th>In-Port</th><th>Type</th><th>Destination</th><th>Action</th><th>Priority</th></tr></thead>
+        <tbody>
+          {% for item in entries %}
+          <tr>
+            <td>{{ 's1' if item.dpid == lab_switches['s1'] else 's2' }}</td>
+            <td>{{ item.entry.get('in_port', 'any') }}</td>
+            <td>{{ item.entry.get('eth_type', '—') }}</td>
+            <td>{{ item.entry.get('ipv4_dst') or item.entry.get('arp_tpa') or 'any' }}</td>
+            <td>{{ item.entry.get('actions', '—') }}</td>
+            <td>{{ item.entry.get('priority', '—') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-entries">No lab routing entries are installed yet.</p>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

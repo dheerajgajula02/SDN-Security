@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Overview · SDN Security{% endblock %}
+{% block content %}
+<section class="hero" aria-labelledby="page-title">
+  <div class="eyebrow"><span class="eyebrow-line"></span> NETWORK CONTROL / OBJECTIVE 4</div>
+  <h1 id="page-title">One place to shape<br><em>network behavior.</em></h1>
+  <p class="hero-copy">Choose a policy workspace below. Static routing sets explicit paths through the switches; firewall rules decide which traffic is permitted.</p>
+</section>
+
+<section class="workspace" aria-labelledby="workspace-title">
+  <div class="section-heading">
+    <div>
+      <span class="section-kicker">WORKSPACES</span>
+      <h2 id="workspace-title">What would you like to manage?</h2>
+    </div>
+    <span class="section-note">01 / 02</span>
+  </div>
+
+  <div class="cards">
+    <a class="policy-card routing-card" href="{{ url_for('routing') }}">
+      <span class="card-number">01 <span class="card-rule"></span> FORWARDING</span>
+      <span class="card-icon route-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span class="card-title">Static Routing</span>
+      <span class="card-copy">Define how traffic moves between hosts by installing explicit switch flows.</span>
+      <span class="card-link">Open routing <span aria-hidden="true">↗</span></span>
+    </a>
+
+    <a class="policy-card firewall-card" href="{{ url_for('firewall') }}">
+      <span class="card-number">02 <span class="card-rule"></span> ACCESS CONTROL</span>
+      <span class="card-icon shield-icon" aria-hidden="true"><span>✓</span></span>
+      <span class="card-title">Firewall</span>
+      <span class="card-copy">Start from a deny policy, then permit only the traffic an operator selects.</span>
+      <span class="card-link">Open firewall <span aria-hidden="true">↗</span></span>
+    </a>
+  </div>
+</section>
+
+<section class="topology" aria-label="Lab topology">
+  <div>
+    <span class="section-kicker">CURRENT LAB</span>
+    <p>Two switches. Four hosts. One controller.</p>
+  </div>
+  <div class="topology-graphic" aria-hidden="true">
+    <span class="host-pair"><i></i><i></i></span>
+    <span class="topology-line"></span>
+    <span class="switch-node">s1</span>
+    <span class="topology-line long"></span>
+    <span class="switch-node">s2</span>
+    <span class="topology-line"></span>
+    <span class="host-pair"><i></i><i></i></span>
+  </div>
+</section>
+{% endblock %}

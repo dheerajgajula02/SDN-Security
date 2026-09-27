@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Firewall · SDN Security{% endblock %}
+{% block content %}
+<section class="detail-page routing-page firewall-page" aria-labelledby="page-title">
+  <a class="back-link" href="{{ url_for('home') }}">← Back to overview</a>
+  <div class="section-kicker">WORKSPACE 02 / ACCESS CONTROL</div>
+  <h1 id="page-title">Firewall<span class="title-period">.</span></h1>
+  <p>Control the two-switch lab with static OpenFlow entries. A drop rule on each switch blocks all unmatched packets; a selected host pair receives precise ARP and protocol paths.</p>
+
+  {% if error %}<div class="feedback feedback-error" role="alert">{{ error }}</div>{% endif %}
+  {% if notice %}<div class="feedback feedback-success" role="status">{{ notice }}</div>{% endif %}
+
+  <div class="firewall-layout">
+    <section class="detail-panel deny-panel" aria-labelledby="deny-title">
+      <span class="panel-step">01 / DEFAULT POLICY</span>
+      <h2 id="deny-title">Deny by default</h2>
+      <p>Entering from Routing installs a priority-1 drop rule on each switch. Returning to this page keeps your permits until you reset them.</p>
+      <div class="deny-indicator" role="status">{{ 'ACTIVE ON S1 + S2' if default_active else 'CHECK CONTROLLER STATE' }}</div>
+      <div class="port-map" aria-label="Lab host and port map">
+        <div><strong>s1</strong><span>port 1 → 10.0.0.1</span><span>port 2 → 10.0.0.3</span><span>port 3 → s2</span></div>
+        <div><strong>s2</strong><span>port 1 → 10.0.0.2</span><span>port 2 → 10.0.0.4</span><span>port 3 → s1</span></div>
+      </div>
+      <form method="post" action="{{ url_for('firewall') }}" class="reset-form">
+        <input type="hidden" name="operation" value="reset">
+        <button class="reset-link" type="submit" {% if not lab_ready %}disabled{% endif %}>Reset to default deny <span aria-hidden="true">↗</span></button>
+      </form>
+      <p class="panel-footnote">Reset removes every static entry, including permitted flows. Floodlight’s built-in firewall module is not used.</p>
+    </section>
+
+    <section class="detail-panel single-panel" aria-labelledby="permit-title">
+      <span class="panel-step">02 / SELECTIVE PERMIT</span>
+      <h2 id="permit-title">Allow one host pair</h2>
+      <p>Install ARP and IPv4 paths in both directions. The permit priority must exceed the drop priority of 1.</p>
+      <form method="post" action="{{ url_for('firewall') }}" class="route-form">
+        <input type="hidden" name="operation" value="permit">
+        <div class="field-grid">
+          <div class="form-field wide-field">
+            <label for="fw-dpid">Source switch DPID</label>
+            <select id="fw-dpid" name="dpid" required>
+              {% for switch_name, dpid in lab_switches.items()|sort %}
+              <option value="{{ dpid }}" {% if values.get('dpid', lab_switches['s1']) == dpid %}selected{% endif %} {% if dpid not in connected_dpids %}disabled{% endif %}>{{ switch_name }} · {{ dpid }}{% if dpid not in connected_dpids %} (disconnected){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="fw-priority">Priority</label>
+            <input id="fw-priority" name="priority" type="number" min="2" max="65535" value="{{ values.get('priority', '100') }}" required>
+          </div>
+          <div class="form-field">
+            <label for="fw-in-port">In-Port</label>
+            <input id="fw-in-port" name="in_port" type="number" min="1" max="3" value="{{ values.get('in_port', '1') }}" required>
+            <small>Port attached to the source host.</small>
+          </div>
+          <div class="form-field">
+            <label for="fw-eth-type">Ethernet type</label>
+            <select id="fw-eth-type" name="eth_type" required>
+              <option value="0x0800" selected>IPv4 · 0x0800</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="fw-protocol">Layer 4 protocol</label>
+            <select id="fw-protocol" name="protocol" required>
+              <option value="1" {% if values.get('protocol', '1') == '1' %}selected{% endif %}>ICMP · 1</option>
+              <option value="6" {% if values.get('protocol') == '6' %}selected{% endif %}>TCP · 6</option>
+              <option value="17" {% if values.get('protocol') == '17' %}selected{% endif %}>UDP · 17</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="fw-source">Source IP</label>
+            <input id="fw-source" name="source_ip" type="text" inputmode="decimal" value="{{ values.get('source_ip', '10.0.0.1') }}" required>
+          </div>
+          <div class="form-field">
+            <label for="fw-destination">Destination IP</label>
+            <input id="fw-destination" name="destination_ip" type="text" inputmode="decimal" value="{{ values.get('destination_ip', '10.0.0.2') }}" required>
+          </div>
+        </div>
+        <button class="secondary-button" type="submit" {% if not default_active %}disabled{% endif %}>Add permit rule <span aria-hidden="true">↗</span></button>
+      </form>
+    </section>
+  </div>
+
+  <section class="entries-section" aria-labelledby="entries-title">
+    <div class="entries-heading">
+      <div><span class="section-kicker">CONTROLLER INVENTORY</span><h2 id="entries-title">Firewall entries</h2></div>
+      <span class="entry-count">{{ entries|length }} visible</span>
+    </div>
+    {% if entries %}
+    <div class="table-scroll">
+      <table class="entries-table">
+        <thead><tr><th>Switch</th><th>Rule</th><th>In-Port</th><th>Type</th><th>Source → destination</th><th>Protocol</th><th>Action</th><th>Priority</th></tr></thead>
+        <tbody>
+          {% for item in entries %}
+          <tr>
+            <td>{{ 's1' if item.dpid == lab_switches['s1'] else 's2' }}</td>
+            <td>{{ 'Default drop' if 'default' in item.name else 'Permit' }}</td>
+            <td>{{ item.entry.in_port }}</td>
+            <td>{{ item.entry.eth_type }}</td>
+            <td>{{ (item.entry.ipv4_src or item.entry.arp_spa or 'any') ~ ' → ' ~ (item.entry.ipv4_dst or item.entry.arp_tpa or 'any') }}</td>
+            <td>{{ item.entry.protocol_label or '—' }}</td>
+            <td>{{ item.entry.actions }}</td>
+            <td>{{ item.entry.priority }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-entries">No firewall entries are visible yet.</p>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

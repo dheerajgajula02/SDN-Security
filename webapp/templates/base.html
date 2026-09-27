@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1829">
+  <title>{% block title %}SDN Security{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='7') }}">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="SDN Security home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="brand-name">SDN<span> / </span>SECURITY</span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="{{ url_for('home') }}" {% if page == 'home' %}aria-current="page"{% endif %}>Overview</a>
+        <a href="{{ url_for('routing') }}" {% if page == 'routing' %}aria-current="page"{% endif %}>Routing</a>
+        <a href="{{ url_for('firewall') }}" {% if page == 'firewall' %}aria-current="page"{% endif %}>Firewall</a>
+      </nav>
+      <div class="status {% if controller.online %}status-online{% else %}status-offline{% endif %}"
+           role="status" aria-label="Controller status">
+        <span class="status-dot" aria-hidden="true"></span>
+        {% if controller.online %}
+          Controller online <span class="status-count">{{ controller.switch_count }} switches</span>
+        {% else %}
+          Controller offline
+        {% endif %}
+      </div>
+    </header>
+
+    <main id="main-content">{% block content %}{% endblock %}</main>
+
+    <footer class="site-footer">
+      <span>CSCI 5280 <span class="footer-divider">/</span> Lab 4</span>
+      <span>Software-defined networking · Python-driven policy</span>
+    </footer>
+  </div>
+</body>
+</html>
